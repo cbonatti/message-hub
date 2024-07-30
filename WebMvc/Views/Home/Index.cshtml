@@ -33,9 +33,9 @@
             }).catch(function (err) {
                 console.error(err.toString());
             });
-            connection.on("Message", function (message) {
-                document.getElementById("output").innerHTML = "Last input: " + message;
-            });
+            //connection.on("Message", function (message) {
+            //    document.getElementById("output").innerHTML = "Last input: " + message;
+            //});
 
             connection.on("ClientList", function (clients) {
                 clients = clients.filter(function (e) { return e !== connection.connectionId }).map(str => ({ name: str, input: '' }));
@@ -57,9 +57,9 @@
                 }
             });
             document.getElementById("input").addEventListener("input", function (event) {
-                connection.invoke("SendMessage", event.target.value).catch(function (err) {
-                    return console.error(err.toString());
-                });
+                //connection.invoke("SendMessage", event.target.value).catch(function (err) {
+                //    return console.error(err.toString());
+                //});
                 connection.invoke("SendMessageTo", event.target.value, connection.connectionId).catch(function (err) {
                     return console.error(err.toString());
                 });
