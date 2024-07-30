@@ -1,0 +1,73 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Real-Time Sync</h1>
+    Your input: 
+    <input type="text" id="input" />
+    <div id="output"></div>
+    <h3>Other clients input</h3>
+    <div>
+        <table id="clients">
+            <tr>
+                <th>Clients</th>
+                <th>Input</th>
+            </tr>
+        </table>
+    </div>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.25/signalr.min.js"></script>
+    <script>
+        $(function () {
+            var connectedClients = [];
+            var connection = new signalR.HubConnectionBuilder().withUrl("http://localhost:5123/message-hub").build();
+
+
+            connection.start().then(function () {
+                console.log("Connected to hub");
+            }).catch(function (err) {
+                console.error(err.toString());
+            });
+            connection.on("Message", function (message) {
+                document.getElementById("output").innerHTML = "Last input: " + message;
+            });
+
+            connection.on("ClientList", function (clients) {
+                clients = clients.filter(function (e) { return e !== connection.connectionId }).map(str => ({ name: str, input: '' }));
+                
+                const clientsTable = document.getElementById("clients");
+
+                for (let i = 0; i < clients.length; i++) {
+                    if (!connectedClients.some(x => x.name == clients[i].name)) {
+                        connectedClients.push(clients[i]);
+
+                        // Add new Client to the table
+                        const line = clientsTable.insertRow();
+                        const celName = line.insertCell();
+                        const celInput = line.insertCell();
+                        
+                        celName.textContent = clients[i].name;
+                        celInput.id = clients[i].name;
+
+                        onMessage(connection, clients[i].name);
+                    }
+                }
+            });
+            document.getElementById("input").addEventListener("input", function (event) {
+                connection.invoke("SendMessage", event.target.value).catch(function (err) {
+                    return console.error(err.toString());
+                });
+                connection.invoke("SendMessageTo", event.target.value, connection.connectionId).catch(function (err) {
+                    return console.error(err.toString());
+                });
+            });
+        });
+
+        function onMessage(connection, id) {
+            connection.on(id, function (message) {
+                document.getElementById(id).innerHTML = message;
+            });
+        }
+    </script>
+</div>
